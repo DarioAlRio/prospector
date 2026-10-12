@@ -1,0 +1,19 @@
+# Claves de API
+.env
+
+# Datos de leads: llevan teléfonos y direcciones de negocios reales, fuera del repo
+leads.csv
+leads_db.json
+*.json.tmp
+
+# Runtime del skill de diseño impeccable
+.impeccable/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Configuración local de Claude Code
+.claude/

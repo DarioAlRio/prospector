@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prospector · negocios sin web</title>
+<style>
+  /* ---------------------------------------------------------------
+     Herramienta de trabajo (modo Operate): una sola familia sans para
+     toda la interfaz, mono reservado a datos (teléfonos y cifras).
+     El color sale de la cartografía, que es de donde salen los datos.
+     --------------------------------------------------------------- */
+  :root {
+    --papel:      #e8ebe9;   /* fondo de página */
+    --barra:      #dfe4e1;   /* segunda capa neutra: barra de control */
+    --superficie: #f9fbf9;   /* fichas y paneles */
+    --tinta:      #16232b;
+    --tinta-baja: #4c5b61;   /* margen de sobra sobre 4.5:1 en las etiquetas */
+    --filete:     #c7d0cb;
+    --filete-alto:#aab6b0;
+    --acento:     #0d5551;
+    --acento-piso:#d7e6e2;
+    --marca:      #0f6238;   /* semántico: acción de contacto */
+    --alerta:     #7d4a12;   /* semántico: dato sin confirmar */
+    --alerta-piso:#f1e5d1;
+    --fallo:      #8c231c;
+    --fallo-piso: #f3dcd9;
+
+    --ui: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system,
+          "Helvetica Neue", Arial, sans-serif;
+    --mono: "Cascadia Mono", Consolas, ui-monospace, "SF Mono", monospace;
+
+    /* escala fija, razón ~1.15 */
+    --t-xs: .75rem; --t-sm: .8125rem; --t-base: .9375rem;
+    --t-md: 1.0625rem; --t-lg: 1.3125rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --papel:      #0f1518;
+      --barra:      #151d21;
+      --superficie: #1a2328;
+      --tinta:      #e3eae8;
+      --tinta-baja: #97a8ac;
+      --filete:     #2b383e;
+      --filete-alto:#3c4c53;
+      --acento:     #63bdaf;
+      --acento-piso:#12332f;
+      --marca:      #46bd79;
+      --alerta:     #dda45c;
+      --alerta-piso:#2f2614;
+      --fallo:      #ec9289;
+      --fallo-piso: #351d1a;
+    }
+  }
+  :root[data-tema="light"] {
+    --papel: #e8ebe9; --barra: #dfe4e1; --superficie: #f9fbf9;
+    --tinta: #16232b; --tinta-baja: #4c5b61; --filete: #c7d0cb; --filete-alto: #aab6b0;
+    --acento: #0d5551; --acento-piso: #d7e6e2; --marca: #0f6238;
+    --alerta: #7d4a12; --alerta-piso: #f1e5d1; --fallo: #8c231c; --fallo-piso: #f3dcd9;
+  }
+  :root[data-tema="dark"] {
+    --papel: #0f1518; --barra: #151d21; --superficie: #1a2328;
+    --tinta: #e3eae8; --tinta-baja: #97a8ac; --filete: #2b383e; --filete-alto: #3c4c53;
+    --acento: #63bdaf; --acento-piso: #12332f; --marca: #46bd79;
+    --alerta: #dda45c; --alerta-piso: #2f2614; --fallo: #ec9289; --fallo-piso: #351d1a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--papel); color: var(--tinta);
+    font: var(--t-base)/1.55 var(--ui);
+    -webkit-font-smoothing: antialiased;
+  }
+  .hoja { max-width: 58rem; margin: 0 auto; padding: 0 1.25rem 5rem; }
+
+  /* --- cabecera y barra de control -------------------------------- */
+  .cabecera {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 1.75rem 0 1rem;
+  }
+  .cabecera h1 { font-size: var(--t-lg); font-weight: 650; margin: 0; letter-spacing: -.015em; }
+  .cabecera p { margin: .1rem 0 0; color: var(--tinta-baja); font-size: var(--t-sm); }
+
+  .barra {
+    background: var(--barra); border: 1px solid var(--filete);
+    border-radius: 4px; padding: 1rem 1.1rem; margin-bottom: 1.5rem;
+  }
+  .campos { display: grid; gap: .9rem 1rem; grid-template-columns: 1.4fr 1.4fr 1fr .6fr; }
+  .campo { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+  label { font-size: var(--t-sm); font-weight: 600; color: var(--tinta-baja); }
+  label .opcional { font-weight: 400; }
+  input, select, textarea {
+    font: inherit; color: var(--tinta); background: var(--superficie);
+    border: 1px solid var(--filete-alto); border-radius: 3px; padding: .45rem .55rem; min-width: 0;
+    transition: border-color .15s ease;
+  }
+  input:hover, select:hover, textarea:hover { border-color: var(--tinta-baja); }
+  input[type="number"] { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  textarea { font-size: var(--t-sm); line-height: 1.55; resize: vertical; min-height: 5.5rem; width: 100%; }
+  :is(input, select, textarea, button, a, summary):focus-visible {
+    outline: 2px solid var(--acento); outline-offset: 2px;
+  }
+  .interruptores { display: flex; flex-wrap: wrap; align-items: center; gap: 1.1rem; margin-top: 1rem; }
+  .opcion { display: flex; align-items: center; gap: .4rem; font-size: var(--t-sm); color: var(--tinta-baja); }
+  .opcion input { width: auto; accent-color: var(--acento); }
+  .opcion.inactiva { opacity: .45; }
+
+  /* --- controles -------------------------------------------------- */
+  button, a.boton {
+    font: 600 var(--t-sm)/1.2 var(--ui); cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; border: 1px solid var(--filete-alto);
+    border-radius: 3px; padding: .5rem .8rem;
+    background: var(--superficie); color: var(--tinta);
+    transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+  }
+  button:hover:not(:disabled), a.boton:hover { border-color: var(--tinta-baja); }
+  button:active:not(:disabled), a.boton:active { transform: translateY(1px); }
+  button:disabled { opacity: .5; cursor: default; }
+  /* misma especificidad que la regla base, o el fondo neutro ganaría */
+  button.primario { background: var(--acento); border-color: var(--acento); color: var(--superficie); }
+  button.primario:hover:not(:disabled) { background: var(--tinta); border-color: var(--tinta); }
+  a.boton.contacto { background: var(--marca); border-color: var(--marca); color: #fff; }
+  a.boton.contacto:hover { background: var(--tinta); border-color: var(--tinta); }
+  .sutil { background: none; border-color: var(--filete); color: var(--tinta-baja); }
+
+  /* --- rendimiento de la búsqueda --------------------------------- */
+  /* La cifra que importa no es cuántos hay, sino qué proporción sirve:
+     con OpenStreetMap la mayoría se cae por no tener teléfono. */
+  .rendimiento {
+    background: var(--superficie); border: 1px solid var(--filete);
+    border-radius: 4px; padding: .95rem 1.1rem; margin-bottom: 1rem; font-size: var(--t-sm);
+  }
+  .rendimiento .frase { margin: 0 0 .7rem; }
+  .rendimiento .frase b { font-variant-numeric: tabular-nums; }
+  .proporcion { display: flex; height: 8px; border-radius: 2px; overflow: hidden; background: var(--barra); }
+  .proporcion i { display: block; }
+  .proporcion i.util { background: var(--acento); }
+  .proporcion i.n1 { background: var(--filete-alto); }
+  .proporcion i.n2 { background: var(--filete); }
+  .leyenda {
+    display: flex; flex-wrap: wrap; gap: .3rem 1.1rem; margin: .6rem 0 0;
+    padding: 0; list-style: none; color: var(--tinta-baja); font-size: var(--t-xs);
+  }
+  .leyenda li { display: flex; align-items: center; gap: .35rem; }
+  .leyenda .muestra { width: 8px; height: 8px; border-radius: 1px; background: var(--filete-alto); flex: none; }
+  .leyenda .muestra.util { background: var(--acento); }
+  .leyenda b { font-family: var(--mono); font-variant-numeric: tabular-nums; font-weight: 600; color: var(--tinta); }
+
+  /* --- avisos ------------------------------------------------------ */
+  .nota { border: 1px solid var(--filete); border-radius: 4px; padding: .8rem .95rem;
+          margin-bottom: 1rem; font-size: var(--t-sm); background: var(--superficie); }
+  .nota.duda  { background: var(--alerta-piso); border-color: var(--alerta); color: var(--alerta); }
+  .nota.fallo { background: var(--fallo-piso);  border-color: var(--fallo);  color: var(--fallo); }
+  details.detalle { margin-top: .7rem; }
+  details.detalle summary { cursor: pointer; font-size: var(--t-xs); color: var(--tinta-baja); }
+  .traza { font: var(--t-xs)/1.65 var(--mono); color: var(--tinta-baja);
+           white-space: pre-wrap; margin: .5rem 0 0; overflow-x: auto; }
+
+  /* --- barra de progreso indeterminada ----------------------------- */
+  .progreso { height: 3px; background: var(--barra); border-radius: 2px; overflow: hidden; margin-top: .7rem; }
+  .progreso i { display: block; height: 100%; width: 35%; background: var(--acento);
+                animation: recorrer 1.6s ease-in-out infinite; }
+  @keyframes recorrer {
+    0% { transform: translateX(-100%); } 100% { transform: translateX(340%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .progreso i { animation: none; width: 100%; opacity: .5; }
+    button:active:not(:disabled), a.boton:active { transform: none; }
+  }
+
+  /* --- listados ---------------------------------------------------- */
+  .seccion { display: flex; align-items: baseline; gap: .5rem; margin: 2rem 0 .8rem; }
+  .seccion h2 { font-size: var(--t-md); font-weight: 650; margin: 0; }
+  .seccion .cuenta { font: 600 var(--t-sm)/1 var(--mono); font-variant-numeric: tabular-nums;
+                     color: var(--tinta-baja); }
+  .fichas { display: flex; flex-direction: column; gap: .7rem; }
+  .ficha { background: var(--superficie); border: 1px solid var(--filete);
+           border-radius: 4px; padding: 1rem 1.1rem; transition: opacity .2s ease; }
+  .ficha.resuelta { opacity: .4; }
+  .titulo { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .3rem; }
+  .ficha h3 { font-size: var(--t-md); font-weight: 650; margin: 0; text-wrap: balance; }
+  .chip { font-size: var(--t-xs); font-weight: 600; padding: .2rem .4rem; border-radius: 3px;
+          background: var(--acento-piso); color: var(--acento); }
+  .chip.duda { background: var(--alerta-piso); color: var(--alerta); }
+  .datos { display: flex; flex-wrap: wrap; gap: .2rem 1rem; margin-bottom: .85rem;
+           font-size: var(--t-sm); color: var(--tinta-baja); }
+  .datos .tel { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--tinta); }
+  .campo-mensaje { display: flex; flex-direction: column; gap: .3rem; }
+  .acciones { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .7rem; }
+  .vacio { color: var(--tinta-baja); font-size: var(--t-sm); margin: 0; }
+  .vacio strong { color: var(--tinta); font-weight: 600; }
+  .guia { background: var(--superficie); border: 1px dashed var(--filete-alto);
+          border-radius: 4px; padding: 1rem 1.1rem; }
+  .guia ol { margin: .5rem 0 0; padding-left: 1.2rem; }
+  .guia li { margin-bottom: .2rem; }
+
+  @media (max-width: 760px) { .campos { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) {
+    .campos { grid-template-columns: 1fr; }
+    .cabecera { flex-direction: column; align-items: flex-start; gap: .6rem; }
+  }
+</style>
+</head>
+<body>
+<div class="hoja">
+
+  <header class="cabecera">
+    <div>
+      <h1>Negocios sin web</h1>
+      <p>Barre una zona, quédate con quien no tiene página y escríbele tú.</p>
+    </div>
+    <button type="button" class="sutil" id="cambiar-tema">Cambiar tema</button>
+  </header>
+
+  <form class="barra" id="formulario">
+    <div class="campos">
+      <div class="campo">
+        <label for="query">Tipo de negocio <span class="opcional">(vacío: todos)</span></label>
+        <input id="query" list="tipos" placeholder="peluquerias" autocomplete="off">
+        <datalist id="tipos"></datalist>
+      </div>
+      <div class="campo">
+        <label for="zona">Zona</label>
+        <input id="zona" placeholder="Retiro, Madrid" autocomplete="off" required>
+      </div>
+      <div class="campo">
+        <label for="fuente">Fuente</label>
+        <select id="fuente">
+          <option value="auto">Automática</option>
+          <option value="osm">OpenStreetMap</option>
+          <option value="google">Google Places</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="max">Máximo</label>
+        <input id="max" type="number" min="1" max="60" value="20">
+      </div>
+    </div>
+
+    <div class="interruptores">
+      <button type="submit" class="primario" id="boton-buscar">Buscar</button>
+      <label class="opcion" id="etiqueta-ia"><input type="checkbox" id="usar_ia"> Mensajes escritos por Claude</label>
+      <label class="opcion"><input type="checkbox" id="revisar_pendientes"> Incluir los ya vistos</label>
+    </div>
+  </form>
+
+  <div id="estado"></div>
+  <div id="resultados" class="fichas"></div>
+
+  <div class="seccion">
+    <h2>Pendientes de contactar</h2>
+    <span class="cuenta" id="contador-pendientes"></span>
+  </div>
+  <div id="pendientes" class="fichas"><p class="vacio">Cargando…</p></div>
+
+</div>
+
+<script>
+const $ = (sel) => document.querySelector(sel);
+
+// --- tema ------------------------------------------------------------------
+
+const temaGuardado = localStorage.getItem("tema");
+if (temaGuardado) document.documentElement.dataset.tema = temaGuardado;
+
+$("#cambiar-tema").addEventListener("click", () => {
+  const oscuroAhora = document.documentElement.dataset.tema
+    ? document.documentElement.dataset.tema === "dark"
+    : matchMedia("(prefers-color-scheme: dark)").matches;
+  const nuevo = oscuroAhora ? "light" : "dark";
+  document.documentElement.dataset.tema = nuevo;
+  localStorage.setItem("tema", nuevo);
+});
+
+// --- utilidades ------------------------------------------------------------
+
+function esc(texto) {
+  const d = document.createElement("div");
+  d.textContent = texto ?? "";
+  return d.innerHTML;
+}
+
+// El número ya viene normalizado por el servidor dentro del link; lo
+// reaprovechamos para reconstruir el enlace cuando editas el mensaje.
+function numeroDe(link) {
+  const m = (link || "").match(/wa\.me\/(\d+)/);
+  return m ? m[1] : null;
+}
+
+const enlaceWhatsapp = (numero, mensaje) => `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+
+// Ficha del negocio en Google: la trae el servidor (exacta si viene de Google
+// Places). El respaldo es por si el registro es de una versión anterior.
+const enlaceFicha = (lead) => lead.google_maps ||
+  ("https://www.google.com/maps/search/?api=1&query=" +
+   encodeURIComponent(`${lead.nombre} ${lead.direccion || lead.zona || ""}`.trim()));
+const nota = (clase, html) => `<div class="nota ${clase}">${html}</div>`;
+
+// --- ficha de un negocio ---------------------------------------------------
+
+function pintarFicha(lead) {
+  const numero = numeroDe(lead.whatsapp_link);
+  const dudosa = lead.web_confirmada === "no" || lead.fuente === "osm";
+  const datos = [
+    lead.telefono ? `<span class="tel">${esc(lead.telefono)}</span>` : "",
+    lead.direccion ? `<span>${esc(lead.direccion)}</span>` : "",
+    lead.tipo ? `<span>${esc(lead.tipo)}</span>` : "",
+    lead.fecha ? `<span>visto el ${esc(lead.fecha)}</span>` : "",
+  ].filter(Boolean).join("");
+
+  return `
+    <article class="ficha" data-id="${esc(lead.id)}" data-numero="${esc(numero || "")}">
+      <div class="titulo">
+        <h3>${esc(lead.nombre)}</h3>
+        <span class="chip ${dudosa ? "duda" : ""}">${dudosa ? "sin web · por confirmar" : "sin web · confirmado"}</span>
+      </div>
+      <div class="datos">${datos}</div>
+      <div class="campo-mensaje">
+        <label>Mensaje — edítalo antes de enviarlo</label>
+        <textarea class="mensaje">${esc(lead.mensaje || "")}</textarea>
+      </div>
+      <div class="acciones">
+        ${numero
+          ? `<a class="boton contacto wa" target="_blank" rel="noopener"
+                href="${enlaceWhatsapp(numero, lead.mensaje || "")}">Abrir WhatsApp</a>`
+          : `<span class="vacio">Sin teléfono utilizable</span>`}
+        <a class="boton" target="_blank" rel="noopener"
+           href="${enlaceFicha(lead)}">Ficha en Google</a>
+        <button type="button" data-accion="contactado">Marcar contactado</button>
+        <button type="button" class="sutil" data-accion="descartado">Descartar</button>
+      </div>
+    </article>`;
+}
+
+// Editar el mensaje tiene que actualizar el enlace, o mandarías el texto viejo.
+document.addEventListener("input", (ev) => {
+  if (!ev.target.classList.contains("mensaje")) return;
+  const ficha = ev.target.closest(".ficha");
+  const enlace = ficha.querySelector("a.wa");
+  if (ficha.dataset.numero && enlace) enlace.href = enlaceWhatsapp(ficha.dataset.numero, ev.target.value);
+});
+
+document.addEventListener("click", async (ev) => {
+  const boton = ev.target.closest("button[data-accion]");
+  if (!boton) return;
+  const ficha = boton.closest(".ficha");
+  const textoOriginal = boton.textContent;
+
+  boton.disabled = true;
+  boton.textContent = "Guardando…";
+  try {
+    const resp = await fetch("/api/estado", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({id: ficha.dataset.id, estado: boton.dataset.accion}),
+    });
+    if (!resp.ok) throw new Error((await resp.json()).error || "el servidor no lo aceptó");
+    ficha.classList.add("resuelta");
+    ficha.querySelectorAll("button, textarea").forEach(el => el.disabled = true);
+    boton.textContent = boton.dataset.accion === "contactado" ? "Contactado" : "Descartado";
+    cargarPendientes();
+  } catch (e) {
+    boton.disabled = false;
+    boton.textContent = textoOriginal;
+    $("#estado").innerHTML = nota("fallo", `No se pudo guardar el cambio: ${esc(e.message)}.
+      Comprueba que el servidor sigue en marcha y vuelve a pulsar.`);
+  }
+});
+
+// --- búsqueda --------------------------------------------------------------
+
+$("#formulario").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const boton = $("#boton-buscar");
+  const general = !$("#query").value.trim();
+  boton.disabled = true;
+  boton.textContent = "Buscando…";
+  $("#resultados").innerHTML = "";
+  $("#estado").innerHTML = nota("", `Buscando${general ? " de todo" : ""} en la zona.
+      Con OpenStreetMap puede tardar ${general ? "un par de minutos" : "hasta un minuto"}.
+      <div class="progreso"><i></i></div>`);
+
+  try {
+    const resp = await fetch("/api/buscar", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        query: $("#query").value,
+        zona: $("#zona").value,
+        fuente: $("#fuente").value,
+        max: parseInt($("#max").value, 10) || 20,
+        usar_ia: $("#usar_ia").checked,
+        revisar_pendientes: $("#revisar_pendientes").checked,
+      }),
+    });
+    const datos = await resp.json();
+    if (!resp.ok) throw new Error(datos.error || "la búsqueda no se pudo completar");
+    pintarResultado(datos);
+    cargarPendientes();
+  } catch (e) {
+    $("#estado").innerHTML = nota("fallo", esc(e.message));
+  } finally {
+    boton.disabled = false;
+    boton.textContent = "Buscar";
+  }
+});
+
+function pintarResultado(datos) {
+  const c = datos.conteo;
+  const utiles = datos.leads.length;
+  const descartes = [
+    [c.sin_telefono, "sin teléfono"],
+    [c.con_web, "ya tienen web"],
+    [c.conocidos, "ya vistos antes"],
+    [c.cerrados, "cerrados"],
+  ].filter(([n]) => n > 0);
+
+  // El total es la suma de las partes, no `encontrados`: así la barra siempre
+  // llena el ancho y cada tramo es la proporción real de lo clasificado.
+  const total = descartes.reduce((suma, [n]) => suma + n, utiles) || 1;
+  const segmentos = [`<i class="util" style="width:${utiles / total * 100}%"></i>`]
+    .concat(descartes.map(([n], i) =>
+      `<i class="n${(i % 2) + 1}" style="width:${n / total * 100}%"></i>`));
+
+  const leyenda = [`<li><span class="muestra util"></span><b>${utiles}</b>
+      ${utiles === 1 ? "aprovechable" : "aprovechables"}</li>`]
+    .concat(descartes.map(([n, t]) => `<li><span class="muestra"></span><b>${n}</b> ${esc(t)}</li>`));
+
+  let html = `<div class="rendimiento">
+      <p class="frase">De <b>${datos.encontrados}</b> negocios en la zona,
+        <b>${utiles}</b> ${utiles === 1 ? "sirve" : "sirven"} para escribir hoy.</p>
+      <div class="proporcion">${segmentos.join("")}</div>
+      <ul class="leyenda">${leyenda.join("")}</ul>
+      ${datos.traza.length
+        ? `<details class="detalle"><summary>Detalle de la búsqueda</summary>
+           <pre class="traza">${esc(datos.traza.join("\n"))}</pre></details>`
+        : ""}
+    </div>`;
+
+  if (!datos.web_confirmada && utiles) {
+    html += nota("duda", `<strong>OpenStreetMap no confirma quién tiene web.</strong>
+      Si falta el dato puede ser que nadie lo haya mapeado, no que el negocio no tenga página.
+      Abre la <strong>ficha en Google</strong> de cada uno antes de escribir: ahí se ve si
+      tiene web, y de paso el horario y las reseñas.`);
+  }
+
+  $("#estado").innerHTML = html;
+
+  // Un resultado vacío tiene causas muy distintas; decir cuál ahorra probar a ciegas.
+  let explicacion;
+  if (utiles) {
+    explicacion = null;
+  } else if (!datos.encontrados) {
+    explicacion = `<strong>La zona existe, pero no hay negocios de ese tipo mapeados.</strong>
+      Prueba una zona más amplia (el distrito en vez de la calle), deja el tipo vacío
+      para buscar de todo, o cambia el tipo de negocio.`;
+  } else if (c.conocidos && c.conocidos >= datos.encontrados) {
+    explicacion = `<strong>Los ${datos.encontrados} de esta zona ya los tenías.</strong>
+      Marca <strong>Incluir los ya vistos</strong> para volver a sacarlos.`;
+  } else if (c.sin_telefono) {
+    explicacion = `<strong>Hay ${datos.encontrados} negocios, pero ninguno aprovechable.</strong>
+      A ${c.sin_telefono} no les han mapeado el teléfono en OpenStreetMap, y sin teléfono
+      no hay WhatsApp que mandar. Prueba otra zona, o la fuente de Google si tienes key.`;
+  } else {
+    explicacion = `<strong>Ninguno de los ${datos.encontrados} encontrados sirve.</strong>
+      Mira el desglose de arriba para ver por qué.`;
+  }
+
+  $("#resultados").innerHTML = utiles
+    ? datos.leads.map(pintarFicha).join("")
+    : `<p class="vacio">${explicacion}</p>`;
+}
+
+// --- pendientes ------------------------------------------------------------
+
+async function cargarPendientes() {
+  try {
+    const {pendientes} = await (await fetch("/api/pendientes")).json();
+    $("#contador-pendientes").textContent = pendientes.length || "";
+    $("#pendientes").innerHTML = pendientes.length
+      ? pendientes.map(pintarFicha).join("")
+      : `<div class="guia">
+           <p class="vacio">Aquí se van acumulando los negocios que encuentres, hasta que los
+             marques. El flujo es:</p>
+           <ol class="vacio">
+             <li>Buscas una zona.</li>
+             <li>Repasas cada mensaje y lo ajustas si hace falta.</li>
+             <li>Abres WhatsApp, lo envías tú, y marcas <strong>Contactado</strong>.</li>
+           </ol>
+         </div>`;
+  } catch {
+    $("#pendientes").innerHTML = nota("fallo",
+      "No se pudo leer la lista de pendientes. Comprueba que el servidor sigue en marcha.");
+  }
+}
+
+// --- arranque --------------------------------------------------------------
+
+(async function iniciar() {
+  try {
+    const config = await (await fetch("/api/config")).json();
+    $("#tipos").innerHTML = config.tipos.map(t => `<option value="${esc(t)}">`).join("");
+
+    if (!config.hay_key_anthropic) {
+      $("#usar_ia").disabled = true;
+      const etiqueta = $("#etiqueta-ia");
+      etiqueta.classList.add("inactiva");
+      etiqueta.title = "Necesita ANTHROPIC_API_KEY en el .env";
+    }
+    if (!config.hay_key_google) {
+      const opcion = $("#fuente").querySelector('option[value="google"]');
+      opcion.disabled = true;
+      opcion.textContent = "Google Places — falta la API key";
+    }
+  } catch { /* la página sigue siendo usable sin esto */ }
+  cargarPendientes();
+})();
+</script>
+</body>
+</html>
