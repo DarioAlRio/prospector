@@ -21,6 +21,7 @@
     --acento:     #0d5551;
     --acento-piso:#d7e6e2;
     --marca:      #0f6238;   /* semántico: acción de contacto */
+    --sobre-marca:#ffffff;
     --alerta:     #7d4a12;   /* semántico: dato sin confirmar */
     --alerta-piso:#f1e5d1;
     --fallo:      #8c231c;
@@ -46,6 +47,7 @@
       --acento:     #63bdaf;
       --acento-piso:#12332f;
       --marca:      #46bd79;
+      --sobre-marca:#0f1518;
       --alerta:     #dda45c;
       --alerta-piso:#2f2614;
       --fallo:      #ec9289;
@@ -55,13 +57,13 @@
   :root[data-tema="light"] {
     --papel: #e8ebe9; --barra: #dfe4e1; --superficie: #f9fbf9;
     --tinta: #16232b; --tinta-baja: #4c5b61; --filete: #c7d0cb; --filete-alto: #aab6b0;
-    --acento: #0d5551; --acento-piso: #d7e6e2; --marca: #0f6238;
+    --acento: #0d5551; --acento-piso: #d7e6e2; --marca: #0f6238; --sobre-marca: #ffffff;
     --alerta: #7d4a12; --alerta-piso: #f1e5d1; --fallo: #8c231c; --fallo-piso: #f3dcd9;
   }
   :root[data-tema="dark"] {
     --papel: #0f1518; --barra: #151d21; --superficie: #1a2328;
     --tinta: #e3eae8; --tinta-baja: #97a8ac; --filete: #2b383e; --filete-alto: #3c4c53;
-    --acento: #63bdaf; --acento-piso: #12332f; --marca: #46bd79;
+    --acento: #63bdaf; --acento-piso: #12332f; --marca: #46bd79; --sobre-marca: #0f1518;
     --alerta: #dda45c; --alerta-piso: #2f2614; --fallo: #ec9289; --fallo-piso: #351d1a;
   }
 
@@ -102,8 +104,9 @@
   }
   .interruptores { display: flex; flex-wrap: wrap; align-items: center; gap: 1.1rem; margin-top: 1rem; }
   .opcion { display: flex; align-items: center; gap: .4rem; font-size: var(--t-sm); color: var(--tinta-baja); }
-  .opcion input { width: auto; accent-color: var(--acento); }
-  .opcion.inactiva { opacity: .45; }
+  .opcion { cursor: pointer; min-height: 1.75rem; }
+  .opcion input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--acento); cursor: pointer; }
+  .opcion.inactiva { opacity: .45; cursor: not-allowed; }
 
   /* --- controles -------------------------------------------------- */
   button, a.boton {
@@ -119,8 +122,8 @@
   /* misma especificidad que la regla base, o el fondo neutro ganaría */
   button.primario { background: var(--acento); border-color: var(--acento); color: var(--superficie); }
   button.primario:hover:not(:disabled) { background: var(--tinta); border-color: var(--tinta); }
-  a.boton.contacto { background: var(--marca); border-color: var(--marca); color: #fff; }
-  a.boton.contacto:hover { background: var(--tinta); border-color: var(--tinta); }
+  a.boton.contacto { background: var(--marca); border-color: var(--marca); color: var(--sobre-marca); }
+  a.boton.contacto:hover { background: var(--tinta); border-color: var(--tinta); color: var(--superficie); }
   .sutil { background: none; border-color: var(--filete); color: var(--tinta-baja); }
 
   /* --- rendimiento de la búsqueda --------------------------------- */
@@ -188,6 +191,9 @@
   .campo-mensaje { display: flex; flex-direction: column; gap: .3rem; }
   .acciones { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .7rem; }
   .vacio { color: var(--tinta-baja); font-size: var(--t-sm); margin: 0; }
+  .solo-lector { position: absolute; width: 1px; height: 1px; overflow: hidden;
+                 clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+  .ficha:focus { outline: none; }
   .vacio strong { color: var(--tinta); font-weight: 600; }
   .guia { background: var(--superficie); border: 1px dashed var(--filete-alto);
           border-radius: 4px; padding: 1rem 1.1rem; }
@@ -244,14 +250,14 @@
     </div>
   </form>
 
-  <div id="estado"></div>
-  <div id="resultados" class="fichas"></div>
+  <div id="estado" role="status" aria-live="polite"></div>
+  <div id="resultados" class="fichas" aria-live="polite"></div>
 
   <div class="seccion">
-    <h2>Pendientes de contactar</h2>
-    <span class="cuenta" id="contador-pendientes"></span>
+    <h2 id="titulo-pendientes">Pendientes de contactar</h2>
+    <span class="cuenta" id="contador-pendientes" aria-hidden="true"></span>
   </div>
-  <div id="pendientes" class="fichas"><p class="vacio">Cargando…</p></div>
+  <div id="pendientes" class="fichas" aria-labelledby="titulo-pendientes"><p class="vacio">Cargando…</p></div>
 
 </div>
 
@@ -294,11 +300,14 @@ const enlaceWhatsapp = (numero, mensaje) => `https://wa.me/${numero}?text=${enco
 const enlaceFicha = (lead) => lead.google_maps ||
   ("https://www.google.com/maps/search/?api=1&query=" +
    encodeURIComponent(`${lead.nombre} ${lead.direccion || lead.zona || ""}`.trim()));
-const nota = (clase, html) => `<div class="nota ${clase}">${html}</div>`;
+const nota = (clase, html) =>
+  `<div class="nota ${clase}"${clase === "fallo" ? ' role="alert"' : ""}>${html}</div>`;
+const pestanaNueva = `<span class="solo-lector"> (se abre en otra pestaña)</span>`;
 
 // --- ficha de un negocio ---------------------------------------------------
 
 function pintarFicha(lead) {
+  const idMensaje = `mensaje-${String(lead.id).replace(/[^\w-]/g, "_")}`;
   const numero = numeroDe(lead.whatsapp_link);
   const dudosa = lead.web_confirmada === "no" || lead.fuente === "osm";
   const datos = [
@@ -309,23 +318,23 @@ function pintarFicha(lead) {
   ].filter(Boolean).join("");
 
   return `
-    <article class="ficha" data-id="${esc(lead.id)}" data-numero="${esc(numero || "")}">
+    <article class="ficha" tabindex="-1" aria-label="${esc(lead.nombre)}" data-id="${esc(lead.id)}" data-numero="${esc(numero || "")}">
       <div class="titulo">
         <h3>${esc(lead.nombre)}</h3>
         <span class="chip ${dudosa ? "duda" : ""}">${dudosa ? "sin web · por confirmar" : "sin web · confirmado"}</span>
       </div>
       <div class="datos">${datos}</div>
       <div class="campo-mensaje">
-        <label>Mensaje — edítalo antes de enviarlo</label>
-        <textarea class="mensaje">${esc(lead.mensaje || "")}</textarea>
+        <label for="${idMensaje}">Mensaje — edítalo antes de enviarlo</label>
+        <textarea class="mensaje" id="${idMensaje}">${esc(lead.mensaje || "")}</textarea>
       </div>
       <div class="acciones">
         ${numero
           ? `<a class="boton contacto wa" target="_blank" rel="noopener"
-                href="${enlaceWhatsapp(numero, lead.mensaje || "")}">Abrir WhatsApp</a>`
+                href="${enlaceWhatsapp(numero, lead.mensaje || "")}">Abrir WhatsApp${pestanaNueva}</a>`
           : `<span class="vacio">Sin teléfono utilizable</span>`}
         <a class="boton" target="_blank" rel="noopener"
-           href="${enlaceFicha(lead)}">Ficha en Google</a>
+           href="${esc(enlaceFicha(lead))}">Ficha en Google${pestanaNueva}</a>
         <button type="button" data-accion="contactado">Marcar contactado</button>
         <button type="button" class="sutil" data-accion="descartado">Descartar</button>
       </div>
@@ -358,6 +367,10 @@ document.addEventListener("click", async (ev) => {
     ficha.classList.add("resuelta");
     ficha.querySelectorAll("button, textarea").forEach(el => el.disabled = true);
     boton.textContent = boton.dataset.accion === "contactado" ? "Contactado" : "Descartado";
+    // El botón queda desactivado y el foco se perdería: pásalo al siguiente pendiente.
+    let siguiente = ficha.nextElementSibling;
+    while (siguiente && siguiente.classList.contains("resuelta")) siguiente = siguiente.nextElementSibling;
+    (siguiente || ficha).focus();
     cargarPendientes();
   } catch (e) {
     boton.disabled = false;
@@ -375,6 +388,7 @@ $("#formulario").addEventListener("submit", async (ev) => {
   const general = !$("#query").value.trim();
   boton.disabled = true;
   boton.textContent = "Buscando…";
+  $("#resultados").setAttribute("aria-busy", "true");
   $("#resultados").innerHTML = "";
   $("#estado").innerHTML = nota("", `Buscando${general ? " de todo" : ""} en la zona.
       Con OpenStreetMap puede tardar ${general ? "un par de minutos" : "hasta un minuto"}.
@@ -402,6 +416,7 @@ $("#formulario").addEventListener("submit", async (ev) => {
   } finally {
     boton.disabled = false;
     boton.textContent = "Buscar";
+    $("#resultados").removeAttribute("aria-busy");
   }
 });
 
@@ -422,14 +437,14 @@ function pintarResultado(datos) {
     .concat(descartes.map(([n], i) =>
       `<i class="n${(i % 2) + 1}" style="width:${n / total * 100}%"></i>`));
 
-  const leyenda = [`<li><span class="muestra util"></span><b>${utiles}</b>
+  const leyenda = [`<li><span class="muestra util" aria-hidden="true"></span><b>${utiles}</b>
       ${utiles === 1 ? "aprovechable" : "aprovechables"}</li>`]
-    .concat(descartes.map(([n, t]) => `<li><span class="muestra"></span><b>${n}</b> ${esc(t)}</li>`));
+    .concat(descartes.map(([n, t]) => `<li><span class="muestra" aria-hidden="true"></span><b>${n}</b> ${esc(t)}</li>`));
 
   let html = `<div class="rendimiento">
       <p class="frase">De <b>${datos.encontrados}</b> negocios en la zona,
         <b>${utiles}</b> ${utiles === 1 ? "sirve" : "sirven"} para escribir hoy.</p>
-      <div class="proporcion">${segmentos.join("")}</div>
+      <div class="proporcion" aria-hidden="true">${segmentos.join("")}</div>
       <ul class="leyenda">${leyenda.join("")}</ul>
       ${datos.traza.length
         ? `<details class="detalle"><summary>Detalle de la búsqueda</summary>
