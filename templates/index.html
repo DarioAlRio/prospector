@@ -4,32 +4,32 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Prospector · negocios sin web</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Fira+Sans:wght@400;500;600;700&display=swap">
 <style>
   /* ---------------------------------------------------------------
-     Herramienta de trabajo (modo Operate): una sola familia sans para
-     toda la interfaz, mono reservado a datos (teléfonos y cifras).
-     El color sale de la cartografía, que es de donde salen los datos.
+     Sistema de diseño de ui-ux-pro-max ("Flat Design", tablero denso):
+     azul profesional + verde de cierre sobre pizarra, Fira Sans para la
+     interfaz y Fira Code para datos (teléfonos y cifras).
+     Desviaciones a propósito, por contraste WCAG:
+       - borde de campos #7c8ba1 (el #e4ecfc del sistema da 1.2:1, hacen falta 3:1)
+       - texto del chip #1d4ed8 (el azul primario sobre su piso da 4.2:1)
+       - rojo de error #b91c1c (#dc2626 sobre su piso da 3.9:1)
+       - texto negro sobre el verde, como indica el sistema (blanco da 3.8:1)
+     El modo oscuro no lo define la skill: es la misma escala pizarra invertida.
      --------------------------------------------------------------- */
   :root {
-    --papel:      #e8ebe9;   /* fondo de página */
-    --barra:      #dfe4e1;   /* segunda capa neutra: barra de control */
-    --superficie: #f9fbf9;   /* fichas y paneles */
-    --tinta:      #16232b;
-    --tinta-baja: #4c5b61;   /* margen de sobra sobre 4.5:1 en las etiquetas */
-    --filete:     #c7d0cb;
-    --filete-alto:#aab6b0;
-    --acento:     #0d5551;
-    --acento-piso:#d7e6e2;
-    --marca:      #0f6238;   /* semántico: acción de contacto */
-    --sobre-marca:#ffffff;
-    --alerta:     #7d4a12;   /* semántico: dato sin confirmar */
-    --alerta-piso:#f1e5d1;
-    --fallo:      #8c231c;
-    --fallo-piso: #f3dcd9;
+    --papel: #f8fafc; --barra: #f1f5fd; --superficie: #ffffff;
+    --tinta: #0f172a; --tinta-baja: #475569;
+    --filete: #e4ecfc; --filete-medio: #cbd5e1; --filete-alto: #7c8ba1;
+    --acento: #2563eb; --acento-piso: #dbeafe; --acento-texto: #1d4ed8;
+    --marca: #059669; --sobre-marca: #000000;
+    --alerta: #92400e; --alerta-piso: #fef3c7;
+    --fallo: #b91c1c; --fallo-piso: #fee2e2;
 
-    --ui: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system,
-          "Helvetica Neue", Arial, sans-serif;
-    --mono: "Cascadia Mono", Consolas, ui-monospace, "SF Mono", monospace;
+    --ui: "Fira Sans", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    --mono: "Fira Code", "Cascadia Mono", Consolas, ui-monospace, monospace;
 
     /* escala fija, razón ~1.15 */
     --t-xs: .75rem; --t-sm: .8125rem; --t-base: .9375rem;
@@ -37,34 +37,32 @@
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --papel:      #0f1518;
-      --barra:      #151d21;
-      --superficie: #1a2328;
-      --tinta:      #e3eae8;
-      --tinta-baja: #97a8ac;
-      --filete:     #2b383e;
-      --filete-alto:#3c4c53;
-      --acento:     #63bdaf;
-      --acento-piso:#12332f;
-      --marca:      #46bd79;
-      --sobre-marca:#0f1518;
-      --alerta:     #dda45c;
-      --alerta-piso:#2f2614;
-      --fallo:      #ec9289;
-      --fallo-piso: #351d1a;
+    --papel: #0f172a; --barra: #172033; --superficie: #1e293b;
+    --tinta: #f1f5f9; --tinta-baja: #94a3b8;
+    --filete: #334155; --filete-medio: #475569; --filete-alto: #718198;
+    --acento: #60a5fa; --acento-piso: #1e3a5f; --acento-texto: #93c5fd;
+    --marca: #34d399; --sobre-marca: #0f172a;
+    --alerta: #fbbf24; --alerta-piso: #33290f;
+    --fallo: #f87171; --fallo-piso: #3a1d24;
     }
   }
   :root[data-tema="light"] {
-    --papel: #e8ebe9; --barra: #dfe4e1; --superficie: #f9fbf9;
-    --tinta: #16232b; --tinta-baja: #4c5b61; --filete: #c7d0cb; --filete-alto: #aab6b0;
-    --acento: #0d5551; --acento-piso: #d7e6e2; --marca: #0f6238; --sobre-marca: #ffffff;
-    --alerta: #7d4a12; --alerta-piso: #f1e5d1; --fallo: #8c231c; --fallo-piso: #f3dcd9;
+    --papel: #f8fafc; --barra: #f1f5fd; --superficie: #ffffff;
+    --tinta: #0f172a; --tinta-baja: #475569;
+    --filete: #e4ecfc; --filete-medio: #cbd5e1; --filete-alto: #7c8ba1;
+    --acento: #2563eb; --acento-piso: #dbeafe; --acento-texto: #1d4ed8;
+    --marca: #059669; --sobre-marca: #000000;
+    --alerta: #92400e; --alerta-piso: #fef3c7;
+    --fallo: #b91c1c; --fallo-piso: #fee2e2;
   }
   :root[data-tema="dark"] {
-    --papel: #0f1518; --barra: #151d21; --superficie: #1a2328;
-    --tinta: #e3eae8; --tinta-baja: #97a8ac; --filete: #2b383e; --filete-alto: #3c4c53;
-    --acento: #63bdaf; --acento-piso: #12332f; --marca: #46bd79; --sobre-marca: #0f1518;
-    --alerta: #dda45c; --alerta-piso: #2f2614; --fallo: #ec9289; --fallo-piso: #351d1a;
+    --papel: #0f172a; --barra: #172033; --superficie: #1e293b;
+    --tinta: #f1f5f9; --tinta-baja: #94a3b8;
+    --filete: #334155; --filete-medio: #475569; --filete-alto: #718198;
+    --acento: #60a5fa; --acento-piso: #1e3a5f; --acento-texto: #93c5fd;
+    --marca: #34d399; --sobre-marca: #0f172a;
+    --alerta: #fbbf24; --alerta-piso: #33290f;
+    --fallo: #f87171; --fallo-piso: #3a1d24;
   }
 
   * { box-sizing: border-box; }
@@ -80,7 +78,7 @@
     display: flex; align-items: center; justify-content: space-between; gap: 1rem;
     padding: 1.75rem 0 1rem;
   }
-  .cabecera h1 { font-size: var(--t-lg); font-weight: 650; margin: 0; letter-spacing: -.015em; }
+  .cabecera h1 { font-size: var(--t-lg); font-weight: 600; margin: 0; letter-spacing: -.015em; }
   .cabecera p { margin: .1rem 0 0; color: var(--tinta-baja); font-size: var(--t-sm); }
 
   .barra {
@@ -139,7 +137,7 @@
   .proporcion i { display: block; }
   .proporcion i.util { background: var(--acento); }
   .proporcion i.n1 { background: var(--filete-alto); }
-  .proporcion i.n2 { background: var(--filete); }
+  .proporcion i.n2 { background: var(--filete-medio); }
   .leyenda {
     display: flex; flex-wrap: wrap; gap: .3rem 1.1rem; margin: .6rem 0 0;
     padding: 0; list-style: none; color: var(--tinta-baja); font-size: var(--t-xs);
@@ -173,7 +171,7 @@
 
   /* --- listados ---------------------------------------------------- */
   .seccion { display: flex; align-items: baseline; gap: .5rem; margin: 2rem 0 .8rem; }
-  .seccion h2 { font-size: var(--t-md); font-weight: 650; margin: 0; }
+  .seccion h2 { font-size: var(--t-md); font-weight: 600; margin: 0; }
   .seccion .cuenta { font: 600 var(--t-sm)/1 var(--mono); font-variant-numeric: tabular-nums;
                      color: var(--tinta-baja); }
   .fichas { display: flex; flex-direction: column; gap: .7rem; }
@@ -181,9 +179,9 @@
            border-radius: 4px; padding: 1rem 1.1rem; transition: opacity .2s ease; }
   .ficha.resuelta { opacity: .4; }
   .titulo { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .3rem; }
-  .ficha h3 { font-size: var(--t-md); font-weight: 650; margin: 0; text-wrap: balance; }
+  .ficha h3 { font-size: var(--t-md); font-weight: 600; margin: 0; text-wrap: balance; }
   .chip { font-size: var(--t-xs); font-weight: 600; padding: .2rem .4rem; border-radius: 3px;
-          background: var(--acento-piso); color: var(--acento); }
+          background: var(--acento-piso); color: var(--acento-texto); }
   .chip.duda { background: var(--alerta-piso); color: var(--alerta); }
   .datos { display: flex; flex-wrap: wrap; gap: .2rem 1rem; margin-bottom: .85rem;
            font-size: var(--t-sm); color: var(--tinta-baja); }
